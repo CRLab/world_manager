@@ -1,0 +1,5 @@
+<launch>
+	<arg name="robot" default="fetch22" />
+
+	<node name="world_manager" pkg="world_manager" type="world_manager_node.py" />
+</launch>
