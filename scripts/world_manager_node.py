@@ -111,70 +111,45 @@ class WorldManager:
             else:
                 rospy.logwarn('File doesn\'t exist - object %s, filename %s' % (model.object_name, filename))
 
-    def add_table(self):
-
-        frame_id = rospy.get_param('/table_frame_id')
-        rospy.loginfo("adding table in planning frame: " + str(frame_id))
-        box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = frame_id
-        table_x = rospy.get_param('/table_x')
-        table_y = rospy.get_param('/table_y')
-        table_z = rospy.get_param('/table_z')
-        table_world_x_offset = rospy.get_param('/table_world_x_offset')
-        table_world_y_offset = rospy.get_param('/table_world_y_offset')
-        table_world_z_offset = rospy.get_param('/table_world_z_offset')
-        box_pose.pose.position.x = table_world_x_offset
-        box_pose.pose.position.y = table_world_y_offset
-        box_pose.pose.position.z = table_world_z_offset
-        box_pose.pose.orientation.x = 0
-        box_pose.pose.orientation.y = 0
-        box_pose.pose.orientation.z = 0
-        box_pose.pose.orientation.w = 1
-        box_dimensions = (table_x, table_y, table_z)
-
-        self.scene.attach_box(world_manager.robot.get_link_names()[0], "table", box_pose, box_dimensions)
-        rospy.loginfo("table added")
-
-
     def add_walls(self):
+        walls = rospy.get_param('/walls')
+        for wall_params in walls:
+            rospy.loginfo("Adding wall " + str(wall_params))
+            self.add_wall(wall_params)
+        return
+
+    def add_wall(self, wall_params):
+        name = wall_params["name"]
+        x_thickness = wall_params["x_thickness"]
+        y_thickness = wall_params["y_thickness"] 
+        z_thickness = wall_params["z_thickness"]
+        x = wall_params["x"]
+        y = wall_params["y"]
+        z = wall_params["z"]
+        qx = wall_params["qx"]
+        qy = wall_params["qy"]
+        qz = wall_params["qz"]
+        qw = wall_params["qw"]
+        frame_id = wall_params["frame_id"]
 
         back_wall_pose = geometry_msgs.msg.PoseStamped()
-        back_wall_pose.header.frame_id = '/world'
-        wall_dimensions = [1.45, .05, .5]
-        back_wall_pose.pose.position = geometry_msgs.msg.Point(**{'x': .35, 'y': 0.2, 'z': 0.28})
-        back_wall_pose.pose.orientation = geometry_msgs.msg.Quaternion(**{'x': 0,
-                                                                          'y': 0,
-                                                                          'z': 0,
-                                                                          'w': 1})
+        back_wall_pose.header.frame_id = '/' + frame_id
+        wall_dimensions = [
+            x_thickness, 
+            y_thickness,  
+            z_thickness
+        ]
 
-        self.scene.add_box("back_wall", back_wall_pose, wall_dimensions)
-
-    def add_bin(self):
-
-        back_bin_pose = geometry_msgs.msg.PoseStamped()
-        back_bin_pose.header.frame_id = '/world'
-        back_bin_dimensions = [0.5, .01, .2]
-        back_bin_pose.pose.position = geometry_msgs.msg.Point(**{'x': .62, 'y': -0.29, 'z': 0.16})
-        back_bin_pose.pose.orientation = geometry_msgs.msg.Quaternion(**{'x': 0,
-                                                                         'y': 0,
-                                                                         'z': 0,
-                                                                         'w': 0})
-        right_bin_pose = geometry_msgs.msg.PoseStamped()
-        right_bin_pose.header.frame_id = '/world'
-        right_bin_dimensions = [0.01, .25, .2]
-        right_bin_pose.pose.position = geometry_msgs.msg.Point(**{'x': .36, 'y': -0.415, 'z': 0.16})
-        right_bin_pose.pose.orientation = geometry_msgs.msg.Quaternion(**{'x': 0,
-                                                                          'y': 0,
-                                                                          'z': 0,
-                                                                          'w': 0})
-
-        self.scene.add_box("back_bin_wall", back_bin_pose, back_bin_dimensions)
-        self.scene.add_box("right_bin_wall", right_bin_pose, right_bin_dimensions)
+        back_wall_pose.pose.position = geometry_msgs.msg.Point(**{'x': x, 'y': y, 'z': z})
+        back_wall_pose.pose.orientation = geometry_msgs.msg.Quaternion(**{'x': qx,
+                                                                          'y': qy,
+                                                                          'z': qz,
+                                                                          'w': qw})
+        self.scene.add_box(name, back_wall_pose, wall_dimensions)
+        return
 
     def add_obstacles(self):
-        self.add_table()
         self.add_walls()
-
 
 if __name__ == '__main__':
 
