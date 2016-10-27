@@ -31,15 +31,22 @@ class WorldManager:
     def __init__(self):
         moveit_commander.roscpp_initialize(sys.argv)
 
-        self.NEW_MODEL_REC = True
+
+
+        self.NEW_MODEL_REC = rospy.get_param("using_new_model_rec")#True
+        self.planning_scene_topic = rospy.get_param("planning_scene_topic")#/get_planning_scene
+        self.run_recognition_topic = rospy.get_param("run_recognition_topic")#"recognize_objects_action"
+        self.detected_model_frame_id=rospy.get_param("detected_model_frame_id")#/world
+
+
         self.scene = ExtendedPlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
 
         self.model_manager = ModelRecManager(self.NEW_MODEL_REC)
 
-        self.planning_scene_service_proxy = rospy.ServiceProxy("/get_planning_scene", moveit_msgs.srv.GetPlanningScene)
+        self.planning_scene_service_proxy = rospy.ServiceProxy(self.planning_scene_topic, moveit_msgs.srv.GetPlanningScene)
 
-        self._run_recognition_as = actionlib.SimpleActionServer("recognize_objects_action",
+        self._run_recognition_as = actionlib.SimpleActionServer(self.run_recognition_topic,
                                                                 graspit_msgs.msg.RunObjectRecognitionAction,
                                                                 execute_cb=self._run_recognition_as_cb,
                                                                 auto_start=False)
@@ -71,7 +78,7 @@ class WorldManager:
         return []
 
     def get_body_names_from_planner(self):
-        rospy.wait_for_service("/get_planning_scene", 5)
+        rospy.wait_for_service(self.planning_scene_topic, 5)
         components = PlanningSceneComponents(
             PlanningSceneComponents.WORLD_OBJECT_NAMES + PlanningSceneComponents.TRANSFORMS)
 
@@ -102,7 +109,7 @@ class WorldManager:
             if os.path.isfile(filename):
 
                 stamped_model_pose = geometry_msgs.msg.PoseStamped()
-                stamped_model_pose.header.frame_id = "/world"
+                stamped_model_pose.header.frame_id = self.detected_model_frame_id
                 stamped_model_pose.pose = model.get_world_pose()
 
                 self.scene.add_mesh_autoscaled(model.object_name, stamped_model_pose, filename)
