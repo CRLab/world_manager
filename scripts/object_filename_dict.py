@@ -1,9 +1,6 @@
-
 import roslib
 import roslib.packages
 import rospy
-
-#pkg_path = roslib.packages.get_pkg_dir('object_models') + '/'
 
 
 def get_path(package_name, resource_name):
@@ -16,10 +13,10 @@ def get_path(package_name, resource_name):
 
 file_name_dict = dict()
 
+#Old
 file_name_dict['darpadrill'] = get_path('object_models', 'darpadrill.iv')
 file_name_dict['darpahammer'] = get_path('object_models', 'darpahammer.iv')
 file_name_dict['coke_can'] = get_path('object_models', 'coke_can.iv')
-
 file_name_dict['garnier_shampoo_bottle'] = get_path('object_models', 'garnier_shampoo_bottle.vtk.stl')
 file_name_dict['all'] = get_path('object_models', 'all.vtk.stl')
 file_name_dict['odwalla_bottle'] = get_path('object_models', 'odwalla_bottle.iv')
@@ -36,6 +33,7 @@ file_name_dict['krylon_spray'] = get_path('object_models','krylon_spray_in_meter
 file_name_dict['library_cup'] = get_path('object_models','library_cup_in_meters.iv')
 file_name_dict['drill_two'] = get_path('object_models', 'drill_custom_two.vtk.stl')
 
+#YCB
 file_name_dict['frenchs_classic_yellow_mustard_14oz_two'] = get_path('object_models', 'frenchs_classic_yellow_mustard_14oz_two.vtk.stl')
 file_name_dict['orange_wood_block_1inx1in'] = get_path('object_models', 'orange_wood_block_1inx1in.iv')
 file_name_dict['black_and_decker_lithium_drill_driver.xml'] = get_path('object_models', 'black_and_decker_lithium_drill_driver.xml')

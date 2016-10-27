@@ -6,5 +6,6 @@
 	<param name="run_recognition_topic" value="recognize_objects_action"/>
 	<param name="detected_model_frame_id" value="/world"/>
 
+	<rosparam command="load" file="$(find world_manager)/configs/$(arg robot).workspace.yaml"/>
 	<node name="world_manager" pkg="world_manager" type="world_manager_node.py" />
 </launch>

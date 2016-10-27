@@ -2,29 +2,27 @@
 import os
 import time
 import sys
+import ipdb
 
 import roslib
 import rospy
 import moveit_commander
+import tf
+import actionlib
+import tf.transformations
 
 import geometry_msgs.msg
-from graspit_msgs.srv import *
 from std_srvs.srv import Empty
+import moveit_msgs
+from moveit_msgs.msg import PlanningSceneComponents
+import moveit_msgs.srv
+from graspit_msgs.srv import *
+import graspit_msgs.msg
+
 
 from extended_planning_scene_interface import ExtendedPlanningSceneInterface
 from model_rec_manager import ModelManager, ModelRecManager
 from object_filename_dict import file_name_dict
-import tf
-import tf.transformations
-
-import ipdb
-import moveit_msgs
-import moveit_msgs.srv
-from moveit_msgs.msg import PlanningSceneComponents
-import actionlib
-import graspit_msgs.msg
-import rospy
-
 
 
 class WorldManager:
@@ -34,7 +32,6 @@ class WorldManager:
         self.planning_scene_topic = rospy.get_param("planning_scene_topic")
         self.run_recognition_topic = rospy.get_param("run_recognition_topic")
         self.detected_model_frame_id=rospy.get_param("detected_model_frame_id")
-
 
         self.scene = ExtendedPlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
@@ -116,53 +113,28 @@ class WorldManager:
 
     def add_table(self):
 
-        frame_id = "/root"
+        frame_id = rospy.get_param('/table_frame_id')
         rospy.loginfo("adding table in planning frame: " + str(frame_id))
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = frame_id
-        table_x = rospy.get_param('/table_x', 1.45)
-        table_y = rospy.get_param('/table_y', .74)
-        table_z = rospy.get_param('/table_z', .05)
-        table_world_x_offset = rospy.get_param('/table_world_x_offset', -.05)
-        table_world_y_offset = rospy.get_param('/table_world_y_offset', -.05)
-        table_world_z_offset = rospy.get_param('/table_world_z_offset', -.0525)
+        table_x = rospy.get_param('/table_x')
+        table_y = rospy.get_param('/table_y')
+        table_z = rospy.get_param('/table_z')
+        table_world_x_offset = rospy.get_param('/table_world_x_offset')
+        table_world_y_offset = rospy.get_param('/table_world_y_offset')
+        table_world_z_offset = rospy.get_param('/table_world_z_offset')
         box_pose.pose.position.x = table_world_x_offset
         box_pose.pose.position.y = table_world_y_offset
         box_pose.pose.position.z = table_world_z_offset
         box_pose.pose.orientation.x = 0
         box_pose.pose.orientation.y = 0
         box_pose.pose.orientation.z = 0
-        box_pose.pose.orientation.w = 0
+        box_pose.pose.orientation.w = 1
         box_dimensions = (table_x, table_y, table_z)
 
         self.scene.attach_box(world_manager.robot.get_link_names()[0], "table", box_pose, box_dimensions)
         rospy.loginfo("table added")
 
-    def add_base(self):
-
-        time.sleep(1)
-
-        frame_id = "/root"
-        rospy.loginfo("adding table in planning frame: " + str(frame_id))
-        box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = frame_id
-        base_x = rospy.get_param('/base_x', 0.2)
-        base_y = rospy.get_param('/base_y', 0.15)
-        base_z = rospy.get_param('/base_z', 0.01)
-        base_robot_x_offset = rospy.get_param('/base_robot_x_offset', 0)
-        base_robot_y_offset = rospy.get_param('/base_robot_y_offset', 0)
-        base_robot_z_offset = rospy.get_param('/base_robot_z_offset', -0.02)
-        box_pose.pose.position.x = base_robot_x_offset
-        box_pose.pose.position.y = base_robot_y_offset
-        box_pose.pose.position.z = base_robot_z_offset
-        box_pose.pose.orientation.x = 0
-        box_pose.pose.orientation.y = 0
-        box_pose.pose.orientation.z = 0
-        box_pose.pose.orientation.w = 0
-        box_dimensions = (base_x, base_y, base_z)
-
-        self.scene.attach_box(world_manager.robot.get_link_names()[1], "robot_base", box_pose, box_dimensions)
-        rospy.loginfo("base added")
 
     def add_walls(self):
 
@@ -173,7 +145,7 @@ class WorldManager:
         back_wall_pose.pose.orientation = geometry_msgs.msg.Quaternion(**{'x': 0,
                                                                           'y': 0,
                                                                           'z': 0,
-                                                                          'w': 0})
+                                                                          'w': 1})
 
         self.scene.add_box("back_wall", back_wall_pose, wall_dimensions)
 
@@ -202,8 +174,6 @@ class WorldManager:
     def add_obstacles(self):
         self.add_table()
         self.add_walls()
-        # self.add_bin()
-        # self.add_base()
 
 
 if __name__ == '__main__':
