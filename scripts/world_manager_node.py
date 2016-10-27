@@ -31,18 +31,15 @@ class WorldManager:
     def __init__(self):
         moveit_commander.roscpp_initialize(sys.argv)
 
-
-
-        self.NEW_MODEL_REC = rospy.get_param("using_new_model_rec")#True
-        self.planning_scene_topic = rospy.get_param("planning_scene_topic")#/get_planning_scene
-        self.run_recognition_topic = rospy.get_param("run_recognition_topic")#"recognize_objects_action"
-        self.detected_model_frame_id=rospy.get_param("detected_model_frame_id")#/world
+        self.planning_scene_topic = rospy.get_param("planning_scene_topic")
+        self.run_recognition_topic = rospy.get_param("run_recognition_topic")
+        self.detected_model_frame_id=rospy.get_param("detected_model_frame_id")
 
 
         self.scene = ExtendedPlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
 
-        self.model_manager = ModelRecManager(self.NEW_MODEL_REC)
+        self.model_manager = ModelRecManager()
 
         self.planning_scene_service_proxy = rospy.ServiceProxy(self.planning_scene_topic, moveit_msgs.srv.GetPlanningScene)
 

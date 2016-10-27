@@ -13,7 +13,6 @@ import tf.transformations
 import tf_conversions.posemath as pm
 
 import objrec_ros_integration, objrec_ros_integration.srv
-# import model_rec2, model_rec2.srv
 import sensor_msgs, sensor_msgs.msg
 import graspit_msgs.srv
 
@@ -21,8 +20,7 @@ import StringIO
 
 
 class ModelManager(object):
-    def __init__(self, model_name, pose, NEW_MODEL_REC):
-        self.NEW_MODEL_REC = NEW_MODEL_REC
+    def __init__(self, model_name, pose):
         self.model_name = model_name
         self.object_name = model_name
         self.pose = pose
@@ -32,10 +30,7 @@ class ModelManager(object):
 
     def broadcast_tf(self):
         tf_pose = pm.toTf(pm.fromMsg(self.pose))
-        if self.NEW_MODEL_REC:
-            self.bc.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), self.object_name, self.detected_frame)
-        else:
-            self.bc.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), self.object_name, "/world")
+        self.bc.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), self.object_name, self.detected_frame)
 
     def get_dist(self):
         self.broadcast_tf()
@@ -53,8 +48,7 @@ class ModelManager(object):
 
 class ModelRecManager(object):
 
-    def __init__(self, NEW_MODEL_REC):
-        self.NEW_MODEL_REC = NEW_MODEL_REC
+    def __init__(self):
         self.__publish_target = True
         self.model_list = list()
 
@@ -69,10 +63,8 @@ class ModelRecManager(object):
         #clear out old models
         self.model_list = list()
 
-        if self.NEW_MODEL_REC:
-            find_objects_srv = rospy.ServiceProxy('/objrec_node/find_objects', objrec_ros_integration.srv.FindObjects)
-        else:
-            find_objects_srv = rospy.ServiceProxy('/recognize_objects',  model_rec2.srv.FindObjects)
+        find_objects_srv = rospy.ServiceProxy('/objrec_node/find_objects', objrec_ros_integration.srv.FindObjects)
+
 
         resp = find_objects_srv()
 
@@ -80,7 +72,7 @@ class ModelRecManager(object):
             rospy.loginfo("Adding ModelManager for object" + str(resp.object_name[i]) )
             rospy.loginfo("Pose: " + str(resp.object_pose[i]))
             self.model_list.append(ModelManager(resp.object_name[i],
-                                                resp.object_pose[i], self.NEW_MODEL_REC))
+                                                resp.object_pose[i]))
         self.uniquify_object_names()
 
         for model in self.model_list:
