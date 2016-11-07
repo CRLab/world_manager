@@ -146,6 +146,7 @@ class WorldManager:
                                                                           'z': qz,
                                                                           'w': qw})
         self.scene.add_box(name, back_wall_pose, wall_dimensions)
+
         return
 
     def add_obstacles(self):
