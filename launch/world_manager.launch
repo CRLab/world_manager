@@ -8,4 +8,5 @@
 
 	<rosparam command="load" file="$(find world_manager)/configs/$(arg robot).workspace.yaml"/>
 	<node name="world_manager" pkg="world_manager" type="world_manager_node.py" output="screen"/>
+
 </launch>

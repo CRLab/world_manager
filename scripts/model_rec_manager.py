@@ -7,6 +7,7 @@ import roslib;
 import rospy
 from numpy import dot,  linalg
 from numpy import mat
+import numpy as np
 
 import tf
 import tf.transformations
@@ -20,22 +21,45 @@ import StringIO
 
 
 class ModelManager(object):
-    def __init__(self, model_name, pose):
+    def __init__(self, model_name, pose_in_camera_frame):
         self.model_name = model_name
         self.object_name = model_name
-        self.pose = pose
-        self.bc = ModelRecManager.tf_broadcaster
+        #TODO 1
+        #this is current camera to object
+        #we need to use tf listener to get camera to world. then use it to get this pose in world frame 
+        #rather than camera. 
+        #1. camera
         self.listener = ModelRecManager.tf_listener
-        self.detected_frame = rospy.get_param("frame_id")
+        self.table_frame = rospy.get_param("table_id")
+        self.camera_frame = rospy.get_param("frame_id")
+        self.listener.waitForTransform(self.camera_frame, self.table_frame, rospy.Time(0),rospy.Duration(10))
+        (camera_to_table_tran, camera_to_table_rot) = self.listener.lookupTransform(self.camera_frame, self.table_frame,rospy.Time(0))
+        tr = tf.TransformerROS()
+        camera_to_table_matrix = tr.fromTranslationRotation(camera_to_table_tran, camera_to_table_rot)
+
+
+        # self.listener.waitForTransform(self.camera_frame, self.object_name, rospy.Time(0), rospy.Duration(10))
+        # (trans, rot) = self.listener.lookupTransform(self.camera_frame, self.object_name, rospy.Time(0))
+        # pose_in_camera_matrix = tr.fromTranslationRotation(trans, rot)
+        pose_in_camera_pykdl = pm.fromMsg(pose_in_camera_frame)
+        pose_in_camera_matrix = pm.toMatrix(pose_in_camera_pykdl)
+        pose_in_table_matrix = np.dot(np.linalg.inv(camera_to_table_matrix), pose_in_camera_matrix)
+        pose_in_table_msg = pm.toMsg(pm.fromMatrix(pose_in_table_matrix))
+
+        self.pose_in_table_frame_msg = pose_in_table_msg
+        self.bc = ModelRecManager.tf_broadcaster
+        
+
+    
 
     def broadcast_tf(self):
-        tf_pose = pm.toTf(pm.fromMsg(self.pose))
-        self.bc.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), self.object_name, self.detected_frame)
+        tf_pose = pm.toTf(pm.fromMsg(self.pose_in_table_frame_msg))
+        self.bc.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), self.object_name, self.table_frame)
 
     def get_dist(self):
         self.broadcast_tf()
-        self.listener.waitForTransform(self.detected_frame, self.object_name, rospy.Time(0), rospy.Duration(10))
-        (trans, rot) = self.listener.lookupTransform(self.detected_frame, self.object_name, rospy.Time(0))
+        self.listener.waitForTransform(self.camera_frame, self.object_name, rospy.Time(0), rospy.Duration(10))
+        (trans, rot) = self.listener.lookupTransform(self.camera_frame, self.object_name, rospy.Time(0))
         return linalg.norm(trans)
 
     def __len__(self):
@@ -70,7 +94,7 @@ class ModelRecManager(object):
 
         for i in range(len(resp.object_name)):
             rospy.loginfo("Adding ModelManager for object" + str(resp.object_name[i]) )
-            rospy.loginfo("Pose: " + str(resp.object_pose[i]))
+            rospy.loginfo("Pose in Camera Frame: " + str(resp.object_pose[i]))
             self.model_list.append(ModelManager(resp.object_name[i],
                                                 resp.object_pose[i]))
         self.uniquify_object_names()
