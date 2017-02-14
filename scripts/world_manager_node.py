@@ -125,6 +125,7 @@ class WorldManager:
 
         for model in self.model_manager.model_list:
             object_info = graspit_msgs.msg.ObjectInfo(model.object_name, model.model_name, model.get_world_pose())
+            model.get_base_pose()
             _result.object_info.append(object_info)
 
 

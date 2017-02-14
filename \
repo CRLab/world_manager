@@ -7,12 +7,12 @@ import roslib;
 import rospy
 from numpy import dot,  linalg
 from numpy import mat
+
 import numpy as np
 
 import tf
 import tf.transformations
 import tf_conversions.posemath as pm
-
 import objrec_ros_integration, objrec_ros_integration.srv
 import sensor_msgs, sensor_msgs.msg
 import graspit_msgs.srv
@@ -32,20 +32,25 @@ class ModelManager(object):
         self.listener = ModelRecManager.tf_listener
         self.table_frame = rospy.get_param("table_id")
         self.camera_frame = rospy.get_param("frame_id")
-        self.listener.waitForTransform(self.camera_frame, self.table_frame, rospy.Time(0),rospy.Duration(10))
-        (camera_to_table_tran, camera_to_table_rot) = self.listener.lookupTransform(self.camera_frame, self.table_frame,rospy.Time(0))
-        tr = tf.TransformerROS()
-        camera_to_table_matrix = tr.fromTranslationRotation(camera_to_table_tran, camera_to_table_rot)
+        wait_time = 20
+        rospy.loginfo("table_frame " + self.table_frame)
+        rospy.loginfo("camera_frame " + self.camera_frame)
+        self.listener.waitForTransform(self.camera_frame, self.table_frame, rospy.Time(0),rospy.Duration(wait_time))
+        (camera_to_table_tran, camera_to_table_rot) = self.listener.lookupTransform(self.camera_frame, self.table_frame, rospy.Time(0))
+        tf_node = tf.TransformerROS() 
+        camera_to_table_matrix = tf_node.fromTranslationRotation(camera_to_table_tran, camera_to_table_rot)
+        pose_in_camera_frame_kdl = pm.fromMsg(pose_in_camera_frame) 
 
-
-        # self.listener.waitForTransform(self.camera_frame, self.object_name, rospy.Time(0), rospy.Duration(10))
+        # self.listener.waitForTransform(self.camera_frame, self.object_name, rospy.Time(0), rospy.Duration(wait_time))
         # (trans, rot) = self.listener.lookupTransform(self.camera_frame, self.object_name, rospy.Time(0))
-        # pose_in_camera_matrix = tr.fromTranslationRotation(trans, rot)
-        pose_in_camera_pykdl = pm.fromMsg(pose_in_camera_frame)
-        pose_in_camera_matrix = pm.toMatrix(pose_in_camera_pykdl)
-        pose_in_table_matrix = np.dot(np.linalg.inv(camera_to_table_matrix), pose_in_camera_matrix)
+        # pose_in_camera_matrix = tf_node.fromTranslationRotation(trans, rot)
+        # IPython.embed()
+        pose_in_camera_matrix = pm.toMatrix(pose_in_camera_frame_kdl)
+        pose_in_table_matrix = np.dot(np.linalg.inverse(camera_to_table_matrix), pose_in_camera_matrix)
         pose_in_table_msg = pm.toMsg(pm.fromMatrix(pose_in_table_matrix))
+        rospy.loginfo(str(pose_in_camera_matrix))
 
+        rospy.loginfo(str(pose_in_table_matrix))
         self.pose_in_table_frame_msg = pose_in_table_msg
         self.bc = ModelRecManager.tf_broadcaster
         
@@ -69,21 +74,6 @@ class ModelManager(object):
         self.broadcast_tf()
         self.listener.waitForTransform("/world", self.object_name, rospy.Time(0),rospy.Duration(10))
         return pm.toMsg(pm.fromTf(self.listener.lookupTransform("/world", self.object_name, rospy.Time(0))))
-        
-    def get_base_pose(self):
-        self.broadcast_tf()
-        import IPython
-        IPython.embed()
-        self.listener.waitForTransform("/base_link", self.object_name, rospy.Time(0),rospy.Duration(10))
-        base_to_object = pm.toMsg(pm.fromTf(self.listener.lookupTransform("/base_link", self.object_name, rospy.Time(0))))
-        object_base_data = (base_to_object.position.x, base_to_object.position.y, base_to_object.position.z)
-        object_base_quart = (base_to_object.orientation.x, base_to_object.orientation.y, base_to_object.orientation.z, base_to_object.orientation.w)
-        object_base_euler = tf.transformations.euler_from_quaternion(object_base_quart)
-        object_base_data += (object_base_euler)
-        np.savetxt("/home/bo/Desktop/reachability_exp/data/obj_base_data.csv", np.array(object_base_data).reshape((1,6)),  '%g', ' ')
-
-
-
 
 class ModelRecManager(object):
 
