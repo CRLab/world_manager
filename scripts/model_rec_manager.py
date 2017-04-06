@@ -8,17 +8,49 @@ import rospy
 from numpy import dot,  linalg
 from numpy import mat
 import numpy as np
-
+import sensor_msgs, sensor_msgs.msg
+import graspit_msgs.srv
 import tf
 import tf.transformations
 import tf_conversions.posemath as pm
 
+
+
+
+'''
 import objrec_ros_integration, objrec_ros_integration.srv
 import sensor_msgs, sensor_msgs.msg
 import graspit_msgs.srv
 
 import StringIO
+import yaml
 
+import rospy
+
+import tf
+import tf_conversions.posemath as pm
+from collections import namedtuple
+DetectedModel = namedtuple('DetectedModel', ['name', 'poseStamped'], verbose=False)
+
+class ModelPoseBroadcaster(object):
+
+    def __init__(self):
+
+        self._model_list = list()
+        self._tf_broadcaster = tf.TransformBroadcaster()
+
+    def add_model(self, model_name, pose):
+        self._model_list.append(DetectedModel(model_name, pose))
+
+    def broadcast_object_tfs(self):
+        for model in self._model_list:
+            tf_pose = pm.toTf(pm.fromMsg(model.poseStamped.pose))
+            self._tf_broadcaster.sendTransform(tf_pose[0], tf_pose[1], rospy.Time.now(), model.name, model.poseStamped.header.frame_id)
+
+    def clear_models(self):
+        self._model_list = []
+
+'''
 
 class ModelManager(object):
     def __init__(self, model_name, pose_in_camera_frame):
@@ -70,19 +102,45 @@ class ModelManager(object):
         self.listener.waitForTransform("/world", self.object_name, rospy.Time(0),rospy.Duration(10))
         return pm.toMsg(pm.fromTf(self.listener.lookupTransform("/world", self.object_name, rospy.Time(0))))
         
+    # def get_base_pose(self):
+    #     self.broadcast_tf()
+    #     self.listener.waitForTransform("/base_link", self.object_name, rospy.Time(0),rospy.Duration(10))
+    #     base_to_object = pm.toMsg(pm.fromTf(self.listener.lookupTransform("/base_link", self.object_name, rospy.Time(0))))
+    #     object_base_data = (base_to_object.position.x, base_to_object.position.y, base_to_object.position.z)
+    #     object_base_quart = (base_to_object.orientation.x, base_to_object.orientation.y, base_to_object.orientation.z, base_to_object.orientation.w)
+    #     object_base_euler = tf.transformations.euler_from_quaternion(object_base_quart)
+    #     object_base_data += (object_base_euler)
+    #     np.savetxt("/home/bo/Desktop/reachability_exp/data/obj_base_data.csv", np.array(object_base_data).reshape((1,6)),  '%g', ' ')
+
     def get_base_pose(self):
+        # import IPython
+        # IPython.embed()
         self.broadcast_tf()
+        self.listener.waitForTransform("/base_link", self.object_name, rospy.Time(0),rospy.Duration(10))
+        (base_to_object_tran, base_to_object_rot) = self.listener.lookupTransform("/base_link", self.object_name, rospy.Time(0))
+        tr = tf.TransformerROS()
+        base_to_object_matrix = tr.fromTranslationRotation(base_to_object_tran, base_to_object_rot)
+
+        np.savetxt("/home/bo/Desktop/reachability_exp/data/obj_base_dataTRANS.csv", np.array(base_to_object_matrix),  '%g', ' ')
+
+        # import IPython
+        # IPython.embed()s
+
+
+
+        base_to_object = pm.toMsg(pm.fromTf(self.listener.lookupTransform("/base_link", self.object_name, rospy.Time(0))))
+        # object_base_data = (base_to_object.position.x, base_to_object.position.y, base_to_object.position.z)
+        # object_base_quart = (base_to_object.orientation.x, base_to_object.orientation.y, base_to_object.orientation.z, base_to_object.orientation.w)
+        # object_base_euler = tf.transformations.euler_from_quaternion(object_base_quart)
+        # object_base_data += (object_base_euler)
         import IPython
         IPython.embed()
-        self.listener.waitForTransform("/base_link", self.object_name, rospy.Time(0),rospy.Duration(10))
-        base_to_object = pm.toMsg(pm.fromTf(self.listener.lookupTransform("/base_link", self.object_name, rospy.Time(0))))
-        object_base_data = (base_to_object.position.x, base_to_object.position.y, base_to_object.position.z)
-        object_base_quart = (base_to_object.orientation.x, base_to_object.orientation.y, base_to_object.orientation.z, base_to_object.orientation.w)
-        object_base_euler = tf.transformations.euler_from_quaternion(object_base_quart)
-        object_base_data += (object_base_euler)
-        np.savetxt("/home/bo/Desktop/reachability_exp/data/obj_base_data.csv", np.array(object_base_data).reshape((1,6)),  '%g', ' ')
-
-
+        np.savetxt("/home/bo/Desktop/reachability_exp/data/obj_base_data_pose.csv", np.array(base_to_object).reshape((1,6)),  '%g', ' ')
+        base_to_object_pose_stamped = geometry_msgs.msg.PoseStamped()
+        base_to_object_pose_stamped.pose = base_to_object
+        base_to_object_pose_stamped.header.frame_id = "base_link"
+        with open('base_to_object.yaml', 'w') as outfile:
+            yaml.dump(base_to_object_pose_stamped, outfile, default_flow_style=False)
 
 
 class ModelRecManager(object):
@@ -130,6 +188,7 @@ class ModelRecManager(object):
             model_name = model.model_name
             object_name = model.object_name
             object_pose = model.get_world_pose()
+            object_innn = model.get_base_pose()
             object_info = graspit_msgs.msg.ObjectInfo(object_name, model_name, object_pose)
             resp.object_info.append(object_info)
         return resp

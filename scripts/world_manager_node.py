@@ -23,7 +23,7 @@ from graspit_msgs.srv import *
 import graspit_msgs.msg
 import moveit_msgs.msg
 import control_msgs.msg
-
+import scene_completion.msg
 
 
 from moveit_commander import PlanningSceneInterface
@@ -55,7 +55,11 @@ from geometry_msgs.msg import PoseStamped
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from moveit_msgs.msg import PlaceLocation, MoveItErrorCodes
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from std_msgs.msg import String
+
 import IPython
+import mcubes
+import numpy as np
 
 from grasp_execution.robot_interface import RobotInterface
 from grasp_execution import execution_stages
@@ -89,6 +93,7 @@ class WorldManager:
         self.scene = PlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
         self.model_manager = ModelRecManager()
+        #self.model_pose_broadcaster = ModelPoseBroadcaster()
 
         self.planning_scene_service_proxy = rospy.ServiceProxy(self.planning_scene_topic, moveit_msgs.srv.GetPlanningScene)
 
@@ -97,7 +102,15 @@ class WorldManager:
                                                                 execute_cb=self._run_recognition_as_cb,
                                                                 auto_start=False)
 
-        self._run_recognition_as.start()
+        self.run_scene_completion_topic = rospy.get_param("run_recognition_topic")
+        self._run_scene_completion_as = actionlib.SimpleActionServer(self.run_scene_completion_topic,
+                                                        graspit_msgs.msg.RunObjectRecognitionAction,
+                                                        execute_cb=self._run_scene_completion_as_cb,
+                                                        auto_start=False)
+
+        # self._run_recognition_as.start()
+        self._run_scene_completion_as.start()
+ 
         # self.get_grasps_as = actionlib.SimpleActionServer("get_grasps_action",
         #                                                         graspit_msgs.msg.GetGraspsAction,
         #                                                         execute_cb=self._get_grasps_as_cb,
@@ -125,7 +138,7 @@ class WorldManager:
 
         for model in self.model_manager.model_list:
             object_info = graspit_msgs.msg.ObjectInfo(model.object_name, model.model_name, model.get_world_pose())
-            model.get_base_pose()
+            # model.get_base_pose()
             _result.object_info.append(object_info)
 
 
@@ -135,6 +148,70 @@ class WorldManager:
         
 
         self._run_recognition_as.set_succeeded(_result)
+        return []
+
+    def _run_scene_completion_as_cb(self, goal):
+        print("_run_scene_completion_as_cb")
+
+        print("about to remove_all_objects_from_planner()")
+        self.remove_all_objects_from_planner()
+        print("finished remove_all_objects_from_planner()")
+        self.add_walls()
+        
+        client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
+        goal = scene_completion.msg.CompleteSceneGoal()
+        client.wait_for_server()
+        client.send_goal(goal)
+        client.wait_for_result()
+
+        result = client.get_result()
+
+        for mesh, pose, in zip(result.meshes, result.poses):
+
+            m = ModelManager("mesh", pose.pose)
+            m.pose_in_table_frame_msg = pose.pose
+            
+
+            vs = []
+
+            for vert in mesh.vertices:
+                vs.append((vert.x,vert.y, vert.z)) 
+
+            vertices = np.array(vs)
+
+            ts = []
+            for tri in mesh.triangles:
+                ts.append(tri.vertex_indices)
+            triangles = np.array(ts)
+            dae_export_dir = "/tmp/"
+            filename = "tmp_mesh" # TODO: random name generator
+            dae_filepath = dae_export_dir + filename + ".dae"
+            ply_filepath = "/home/bo/ros/grasp_ws/basestation_ws/src/interactive_marker_server/meshes/" + filename + ".ply"
+            mcubes.export_mesh(vertices, triangles, dae_filepath, "model")
+            import subprocess
+        
+            cmd_str = "meshlabserver " + "-i " + dae_filepath + " -o " + ply_filepath
+            subprocess.call(cmd_str, shell=True)
+            # TODO:
+            # Find out ply file path and send it back
+            m.mesh_path_dae = dae_filepath
+            m.mesh_path_ply = ply_filepath
+            self.model_manager.model_list.append(m)
+            self.scene.add_mesh("mesh", pose, dae_filepath)
+
+
+        _result = graspit_msgs.msg.RunObjectRecognitionResult()
+        print("graspit_msgs.msg.RunObjectRecognitionResult()")
+
+        for model in self.model_manager.model_list:
+            object_info = graspit_msgs.msg.ObjectInfo(model.object_name, model.model_name, model.get_world_pose(), model.mesh_path_dae, model.mesh_path_ply)
+            # model.get_base_pose()
+            _result.object_info.append(object_info)
+
+        print("finished for loop")
+        # server.applyChanges()        
+
+        self._run_scene_completion_as.set_succeeded(_result)
         return []
 
     def get_body_names_from_planner(self):

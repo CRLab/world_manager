@@ -1,6 +1,6 @@
 walls: 
   - name: "table"
-    x_thickness: 0.60
+    x_thickness: 0.80
     y_thickness: 1.60 
     z_thickness: 1.00
     qx: 0 
