@@ -156,7 +156,7 @@ class WorldManager:
         print("about to remove_all_objects_from_planner()")
         self.remove_all_objects_from_planner()
         print("finished remove_all_objects_from_planner()")
-        self.add_walls()
+        # self.add_walls()
         
         client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
         goal = scene_completion.msg.CompleteSceneGoal()
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node("WorldManagerNode")
         world_manager = WorldManager()
-        world_manager.add_obstacles()
+        # world_manager.add_obstacles()
         loop = rospy.Rate(30)
 
         while not rospy.is_shutdown():
