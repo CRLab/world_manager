@@ -126,7 +126,8 @@ class WorldManager:
         print("about to remove_all_objects_from_planner()")
         self.remove_all_objects_from_planner()
         print("finished remove_all_objects_from_planner()")
-    
+
+
         self.model_manager.refresh()
 
         print("about to add_all_objects_to_planner()")
@@ -157,6 +158,7 @@ class WorldManager:
         self.remove_all_objects_from_planner()
         print("finished remove_all_objects_from_planner()")
         # self.add_walls()
+
         
         client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
         goal = scene_completion.msg.CompleteSceneGoal()
@@ -166,9 +168,11 @@ class WorldManager:
 
         result = client.get_result()
 
-        for mesh, pose, in zip(result.meshes, result.poses):
 
-            m = ModelManager("mesh", pose.pose)
+        mesh_count = 0
+        for mesh, pose, in zip(result.meshes, result.poses):
+            mesh_name = "mesh_" + str(mesh_count)
+            m = ModelManager(mesh_name, pose.pose)
             m.pose_in_table_frame_msg = pose.pose
             
 
@@ -184,7 +188,7 @@ class WorldManager:
                 ts.append(tri.vertex_indices)
             triangles = np.array(ts)
             dae_export_dir = "/tmp/"
-            filename = "tmp_mesh" # TODO: random name generator
+            filename = "tmp_mesh" + str(mesh_count) # TODO: random name generator
             dae_filepath = dae_export_dir + filename + ".dae"
             ply_filepath = "/home/bo/ros/grasp_ws/basestation_ws/src/interactive_marker_server/meshes/" + filename + ".ply"
             mcubes.export_mesh(vertices, triangles, dae_filepath, "model")
@@ -197,7 +201,8 @@ class WorldManager:
             m.mesh_path_dae = dae_filepath
             m.mesh_path_ply = ply_filepath
             self.model_manager.model_list.append(m)
-            self.scene.add_mesh("mesh", pose, dae_filepath)
+            self.scene.add_mesh(mesh_name, pose, dae_filepath)
+            mesh_count += 1
 
 
         _result = graspit_msgs.msg.RunObjectRecognitionResult()
