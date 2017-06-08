@@ -24,7 +24,7 @@ class WorldManager:
 
         self.clear_planning_scene_service = rospy.Service(
             "/world_manager/clear_planning_scene",
-            world_manager_simple.srv.ClearModels,
+            world_manager_simple.srv.ClearObjects,
             self.remove_all_objects_from_planner)
         self.add_mesh_to_planning_scene_service = rospy.Service(
             "/world_manager/add_object", world_manager_simple.srv.AddObject,
@@ -113,6 +113,7 @@ if __name__ == '__main__':
 
     try:
 
+        rospy.sleep(3.0)
         rospy.init_node('world_manager_node')
 
         rospy.loginfo("Starting Up World Manager")
