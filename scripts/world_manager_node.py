@@ -93,82 +93,41 @@ class WorldManager:
         self.scene = PlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
         self.model_manager = ModelRecManager()
-        #self.model_pose_broadcaster = ModelPoseBroadcaster()
 
         self.planning_scene_service_proxy = rospy.ServiceProxy(self.planning_scene_topic, moveit_msgs.srv.GetPlanningScene)
-
-        self._run_recognition_as = actionlib.SimpleActionServer(self.run_recognition_topic,
-                                                                graspit_msgs.msg.RunObjectRecognitionAction,
-                                                                execute_cb=self._run_recognition_as_cb,
-                                                                auto_start=False)
 
         self.run_scene_completion_topic = rospy.get_param("run_recognition_topic")
         self._run_scene_completion_as = actionlib.SimpleActionServer(self.run_scene_completion_topic,
                                                         graspit_msgs.msg.RunObjectRecognitionAction,
                                                         execute_cb=self._run_scene_completion_as_cb,
                                                         auto_start=False)
+        
+        self.scene_completion_client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
+        goal = scene_completion.msg.CompleteSceneGoal()
+        self.scene_completion_client.wait_for_server()
 
-        # self._run_recognition_as.start()
         self._run_scene_completion_as.start()
- 
-        # self.get_grasps_as = actionlib.SimpleActionServer("get_grasps_action",
-        #                                                         graspit_msgs.msg.GetGraspsAction,
-        #                                                         execute_cb=self._get_grasps_as_cb,
-        #                                                         auto_start=False)
-        # self.get_grasps_as.start()
         
 
         rospy.loginfo("World Manager Node is Up and Running")
 
-    def _run_recognition_as_cb(self, goal):
-        print("_run_recognition_as_cb")
-
-        print("about to remove_all_objects_from_planner()")
-        self.remove_all_objects_from_planner()
-        print("finished remove_all_objects_from_planner()")
-
-
-        self.model_manager.refresh()
-
-        print("about to add_all_objects_to_planner()")
-        self.add_all_objects_to_planner()
-        print("finished add_all_objects_to_planner()")
-
-        _result = graspit_msgs.msg.RunObjectRecognitionResult()
-        print("graspit_msgs.msg.RunObjectRecognitionResult()")
-
-        for model in self.model_manager.model_list:
-            object_info = graspit_msgs.msg.ObjectInfo(model.object_name, model.model_name, model.get_world_pose())
-            # model.get_base_pose()
-            _result.object_info.append(object_info)
-
-
-            
-        print("finished for loop")
-        # server.applyChanges()
-        
-
-        self._run_recognition_as.set_succeeded(_result)
-        return []
-
     def _run_scene_completion_as_cb(self, goal):
-        print("_run_scene_completion_as_cb")
+        rospy.loginfo("_run_scene_completion_as_cb")
 
-        print("about to remove_all_objects_from_planner()")
+        rospy.loginfo("about to remove_all_objects_from_planner()")
         self.remove_all_objects_from_planner()
-        print("finished remove_all_objects_from_planner()")
+        rospy.loginfo("finished remove_all_objects_from_planner()")
         # self.add_walls()
 
-        
-        client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
-        goal = scene_completion.msg.CompleteSceneGoal()
-        client.wait_for_server()
-        client.send_goal(goal)
-        client.wait_for_result()
+        rospy.loginfo("about to send goal")
+        self.scene_completion_client.send_goal(goal)
+        rospy.loginfo("waiting for result")
+        self.scene_completion_client.wait_for_result()
 
-        result = client.get_result()
+        rospy.loginfo("received result")
+        result = self.scene_completion_client.get_result()
 
-
+        rospy.loginfo("adding meshes to planning scene")
         mesh_count = 0
         for mesh, pose, in zip(result.meshes, result.poses):
             mesh_name = "mesh_" + str(mesh_count)
@@ -206,14 +165,14 @@ class WorldManager:
 
 
         _result = graspit_msgs.msg.RunObjectRecognitionResult()
-        print("graspit_msgs.msg.RunObjectRecognitionResult()")
+        rospy.loginfo("graspit_msgs.msg.RunObjectRecognitionResult()")
 
         for model in self.model_manager.model_list:
             object_info = graspit_msgs.msg.ObjectInfo(model.object_name, model.model_name, model.get_world_pose(), model.mesh_path_dae, model.mesh_path_ply)
             # model.get_base_pose()
             _result.object_info.append(object_info)
 
-        print("finished for loop")
+        rospy.loginfo("finished for loop")
         # server.applyChanges()        
 
         self._run_scene_completion_as.set_succeeded(_result)
@@ -236,7 +195,7 @@ class WorldManager:
         body_names = self.get_body_names_from_planner()
 
         while len(body_names) > 0:
-            print("removing bodies from the planner, this can potentially take several tries")
+            rospy.loginfo("removing bodies from the planner, this can potentially take several tries")
             for body_name in body_names:
                 self.scene.remove_world_object(body_name)
 
@@ -246,7 +205,7 @@ class WorldManager:
         self.add_obstacles()
         for model in self.model_manager.model_list:
             model_name = model.model_name.strip('/')
-            print "Adding " + str(model_name) + "To Moveit"
+            rospy.loginfo( "Adding " + str(model_name) + "To Moveit")
             filename = file_name_dict[model_name]
             if os.path.isfile(filename):
 
