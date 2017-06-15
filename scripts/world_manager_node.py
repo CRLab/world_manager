@@ -79,6 +79,19 @@ br = None
 counter = 0
 
 
+def save_mesh_as_dae(mesh, dae_filepath):
+
+    vs = []
+    for vert in mesh.vertices:
+        vs.append((vert.x,vert.y, vert.z))
+    vertices = np.array(vs)
+
+    ts = []
+    for tri in mesh.triangles:
+        ts.append(tri.vertex_indices)
+    triangles = np.array(ts)
+
+    mcubes.export_mesh(vertices, triangles, dae_filepath, "model")
 
 
 
@@ -134,26 +147,14 @@ class WorldManager:
             mesh_name = "mesh_" + str(mesh_count)
             m = ModelManager(mesh_name, pose.pose)
             m.pose_in_table_frame_msg = pose.pose
-            
 
-            vs = []
-
-            for vert in mesh.vertices:
-                vs.append((vert.x,vert.y, vert.z)) 
-
-            vertices = np.array(vs)
-
-            ts = []
-            for tri in mesh.triangles:
-                ts.append(tri.vertex_indices)
-            triangles = np.array(ts)
             dae_export_dir = "/tmp/"
             filename = "tmp_mesh" + str(mesh_count) # TODO: random name generator
             dae_filepath = dae_export_dir + filename + ".dae"
-            ply_filepath = "/home/bo/ros/grasp_ws/basestation_ws/src/interactive_marker_server/meshes/" + filename + ".ply"
-            mcubes.export_mesh(vertices, triangles, dae_filepath, "model")
+            save_mesh_as_dae(mesh, dae_filepath)
             import subprocess
         
+            ply_filepath = "/home/bo/ros/grasp_ws/basestation_ws/src/interactive_marker_server/meshes/" + filename + ".ply"
             cmd_str = "meshlabserver " + "-i " + dae_filepath + " -o " + ply_filepath
             subprocess.call(cmd_str, shell=True)
             # TODO:
