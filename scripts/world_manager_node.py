@@ -103,7 +103,7 @@ class WorldManager:
                                                         auto_start=False)
         
         self.scene_completion_client = actionlib.SimpleActionClient("/scene_completion/SceneCompletion", scene_completion.msg.CompleteSceneAction)
-        goal = scene_completion.msg.CompleteSceneGoal()
+        
         self.scene_completion_client.wait_for_server()
 
         self._run_scene_completion_as.start()
@@ -120,6 +120,7 @@ class WorldManager:
         # self.add_walls()
 
         rospy.loginfo("about to send goal")
+        goal = scene_completion.msg.CompleteSceneGoal()
         self.scene_completion_client.send_goal(goal)
         rospy.loginfo("waiting for result")
         self.scene_completion_client.wait_for_result()
