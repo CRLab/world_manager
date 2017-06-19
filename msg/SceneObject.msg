@@ -1,0 +1,3 @@
+string objectname
+string mesh_filepath
+geometry_msgs/PoseStamped pose_stamped
