@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
-  <name>world_manager_simple</name>
-  <version>1.0.0</version>
+  <name>world_manager/name>
+  <version>2.0.0</version>
   <description>  
     Code to keep track of poses of objects detected by recognition system and to 
     add them to the moveit planning scene
@@ -12,7 +12,7 @@
 
   <author>Jake</author>
   <license>BSD</license>
-  <url>https://github.com/CURG/world_manager_simple.git</url>
+  <url>https://github.com/CURG/world_manager.git</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
