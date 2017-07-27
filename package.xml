@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>world_manager/name>
+  <name>world_manager</name>
   <version>2.0.0</version>
   <description>  
     Code to keep track of poses of objects detected by recognition system and to 
