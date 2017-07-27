@@ -4,7 +4,7 @@
 	<param name="planning_scene_topic" value="/get_planning_scene"/>
 	
 	<!--Load the walls for your workspace-->
-	<rosparam command="load" file="$(find world_manager_simple)/configs/$(arg robot).workspace.yaml"/>
+	<rosparam command="load" file="$(find world_manager)/configs/$(arg robot).workspace.yaml"/>
 	
-	<node name="world_manager" pkg="world_manager_simple" type="world_manager_node.py" output="screen"/>
+	<node name="world_manager" pkg="world_manager" type="world_manager_node.py" output="screen"/>
 </launch>

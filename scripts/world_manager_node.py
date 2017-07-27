@@ -5,7 +5,7 @@ import rospy
 import moveit_commander
 
 import geometry_msgs.msg
-import world_manager_simple.srv
+import world_manager.srv
 
 from moveit_commander import PlanningSceneInterface
 from model_manager import ModelPoseBroadcaster
@@ -24,13 +24,13 @@ class WorldManager:
 
         self.clear_planning_scene_service = rospy.Service(
             "/world_manager/clear_planning_scene",
-            world_manager_simple.srv.ClearObjects,
+            world_manager.srv.ClearObjects,
             self.remove_all_objects_from_planner)
         self.add_mesh_to_planning_scene_service = rospy.Service(
-            "/world_manager/add_object", world_manager_simple.srv.AddObject,
+            "/world_manager/add_object", world_manager.srv.AddObject,
             self.add_object_to_planning_scene)
         self.get_objects_from_planning_scene_service = rospy.Service(
-            "/world_manager/get_objects", world_manager_simple.srv.GetObjects,
+            "/world_manager/get_objects", world_manager.srv.GetObjects,
             self.get_objects_from_planning_scene)
 
         rospy.sleep(1.0)
@@ -40,7 +40,7 @@ class WorldManager:
     def add_object_to_planning_scene(self, request):
         # self.remove_all_objects_from_planner(None)
         # this makes sure tf is continually broadcast
-        scene_object = world_manager_simple.msg.SceneObject(request.objectname,
+        scene_object = world_manager.msg.SceneObject(request.objectname,
                                                             request.mesh_filepath,
                                                             request.pose_stamped)
         self.model_pose_broadcaster.add_model(scene_object)
@@ -55,7 +55,7 @@ class WorldManager:
 
     def get_objects_from_planning_scene(self, request):
 
-        response = world_manager_simple.srv.GetObjectsResponse(self.model_pose_broadcaster._model_list)
+        response = world_manager.srv.GetObjectsResponse(self.model_pose_broadcaster._model_list)
 
         return response
 
