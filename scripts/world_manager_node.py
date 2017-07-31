@@ -128,13 +128,13 @@ if __name__ == '__main__':
         rospy.init_node('world_manager_node')
 
         rospy.loginfo("Starting Up World Manager")
-        world_manager = WorldManager()
+        world_manager_ = WorldManager()
 
         rospy.loginfo("World Manager Has Started")
 
         loop = rospy.Rate(30)
         while not rospy.is_shutdown():
-            world_manager.model_pose_broadcaster.broadcast_object_tfs()
+            world_manager_.model_pose_broadcaster.broadcast_object_tfs()
             loop.sleep()
 
     except rospy.ROSInterruptException:
