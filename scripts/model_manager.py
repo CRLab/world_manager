@@ -22,4 +22,4 @@ class ModelPoseBroadcaster(object):
                 self._model_dict[objectname].pose_stamped.header.frame_id)
 
     def clear_models(self):
-        self._model_list = []
+        self._model_list.clear()
