@@ -45,12 +45,13 @@ class WorldManager:
                                                             request.pose_stamped)
         self.model_pose_broadcaster.add_model(scene_object)
 
-        # remove the old completion if it is there
-        self.scene.remove_world_object(request.objectname)
+        if request.add_to_planning_scene:
+            # remove the old completion if it is there
+            self.scene.remove_world_object(request.objectname)
 
-        # add the new object to the planning scene
-        self.scene.add_mesh(request.objectname, request.pose_stamped,
-                            request.mesh_filepath)
+            # add the new object to the planning scene
+            self.scene.add_mesh(request.objectname, request.pose_stamped,
+                                request.mesh_filepath)
         return []
 
     def get_objects_from_planning_scene(self, request):
