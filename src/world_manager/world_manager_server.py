@@ -48,10 +48,10 @@ class WorldManagerServer:
         so = request.scene_object
 
         # add the tf
-        self.tf_manager.add_tf(so)
+        self.tf_manager.add_tf(so.object_name, so.pose_stamped)
 
         # remove the old completion if it is there
-        self.scene.remove_world_object(so.objectname)
+        self.scene.remove_world_object(so.object_name)
 
         # add the new object to the planning scene
         self.scene.add_mesh(so.object_name, so.pose_stamped,

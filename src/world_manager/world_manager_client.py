@@ -1,4 +1,5 @@
 import world_manager.srv
+import world_manager.msg
 import std_srvs.srv
 import rospy
 
@@ -9,7 +10,8 @@ class WorldManagerClient():
         service_proxy = rospy.ServiceProxy("/world_manager/add_mesh",
                                            world_manager.srv.AddMesh)
         service_proxy.wait_for_service(timeout=5)
-        service_proxy(mesh_name, mesh_filepath, pose_stamped)
+        scene_object = world_manager.msg.SceneObject(mesh_name, mesh_filepath, pose_stamped)
+        service_proxy(scene_object)
 
     def clear_objects(self):
         service_proxy = rospy.ServiceProxy("/world_manager/clear_objects",
