@@ -18,6 +18,8 @@ class WorldManagerServer:
         moveit_commander.roscpp_initialize(sys.argv)
 
         self.planning_scene_topic = rospy.get_param("planning_scene_topic")
+        # wait for moveit to come up
+        rospy.wait_for_service(self.planning_scene_topic, 10)
         self.scene = PlanningSceneInterface()
 
         self.tf_manager = TFManager()

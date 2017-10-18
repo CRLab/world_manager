@@ -9,7 +9,7 @@ walls:
     qw: 1
     x: -0.4
     y: 0.0
-    z: -0.01
+    z: 0.01
     frame_id: robot_base
   - name: "right_wall"
     x_thickness: 2.00
