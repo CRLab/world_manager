@@ -40,10 +40,11 @@ class WorldManagerServer:
             self.add_walls_cb)
 
         rospy.sleep(1.0)
-        self.add_walls_cb()
+        self.clear_objects_cb(request=None)
+        self.add_walls_cb(request=None)
         rospy.loginfo("World Manager Node is Up and Running")
 
-    def add_object_cb(self, request):
+    def add_mesh_cb(self, request):
         so = request.scene_object
 
         # add the tf
@@ -73,7 +74,7 @@ class WorldManagerServer:
 
         return []
 
-    def add_walls_cb(self):
+    def add_walls_cb(self, request):
         walls = rospy.get_param('/walls')
         for wall_params in walls:
             rospy.loginfo("Adding wall " + str(wall_params))
