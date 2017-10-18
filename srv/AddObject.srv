@@ -1,5 +1,0 @@
-string objectname
-string mesh_filepath
-geometry_msgs/PoseStamped pose_stamped
-bool add_to_planning_scene
----

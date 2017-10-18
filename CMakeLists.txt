@@ -4,7 +4,7 @@ project(world_manager)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs geometry_msgs std_srvs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -48,9 +48,8 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
-   AddObject.srv
-   ClearObjects.srv
-   GetObjects.srv
+   AddMesh.srv
+   AddTF.srv
  )
 
 ## Generate actions in the 'action' folder
