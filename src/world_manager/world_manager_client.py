@@ -8,7 +8,7 @@ class WorldManagerClient():
 
         service_proxy = rospy.ServiceProxy("/world_manager/add_mesh",
                                            world_manager.srv.AddMesh)
-        service_proxy.wait_for_service(timout=5)
+        service_proxy.wait_for_service(timeout=5)
         service_proxy(mesh_name, mesh_filepath, pose_stamped)
 
     def clear_objects(self):
