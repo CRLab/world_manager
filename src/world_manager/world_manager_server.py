@@ -29,6 +29,10 @@ class WorldManagerServer:
             std_srvs.srv.Empty,
             self.clear_objects_cb)
 
+        self.add_box = rospy.Service(
+            "/world_manager/add_box", world_manager.srv.AddBox,
+            self.add_box_cb)
+
         self.add_mesh = rospy.Service(
             "/world_manager/add_mesh", world_manager.srv.AddMesh,
             self.add_mesh_cb)
@@ -60,6 +64,24 @@ class WorldManagerServer:
                             so.mesh_filepath)
         return []
 
+    def add_box_cb(self, request):
+        # type: (world_manager.srv.AddBoxRequest) -> []
+        box = request.scene_box
+        # type: box -> world_manager.msg.SceneBox
+
+        # add the tf
+        self.tf_manager.add_tf(box.object_name, box.pose_stamped)
+
+        # remove the old box if it is there
+        self.scene.remove_world_object(box.object_name)
+
+        # add the new box to the planning scene
+        self.scene.add_box(name=box.object_name,
+                           pose=box.pose_stamped,
+                           size=(box.edge_length_x, box.edge_length_y, box.edge_length_z))
+
+        return []
+
     def add_tf_cb(self, request):
         self.tf_manager.add_tf(request.frame_name, request.pose_stamped)
         return []
@@ -77,7 +99,7 @@ class WorldManagerServer:
         return []
 
     def add_walls_cb(self, request):
-        walls = rospy.get_param('/walls')
+        walls = rospy.get_param('walls')
         for wall_params in walls:
             rospy.loginfo("Adding wall " + str(wall_params))
             self._add_wall(wall_params)

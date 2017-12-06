@@ -3,8 +3,7 @@
   <name>world_manager</name>
   <version>2.0.0</version>
   <description>  
-    Code to keep track of poses of objects detected by recognition system and to 
-    add them to the moveit planning scene
+    Code for interfacing with Movit planning scene and object TFs
   </description>
 
 
