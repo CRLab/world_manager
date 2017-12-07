@@ -15,11 +15,11 @@ class WorldManagerServer:
 
     def __init__(self):
 
+        rospy.init_node('world_manager_node')
+
         moveit_commander.roscpp_initialize(sys.argv)
 
-        self.planning_scene_topic = rospy.get_param("planning_scene_topic")
         # wait for moveit to come up
-        rospy.wait_for_service(self.planning_scene_topic, 10)
         self.scene = PlanningSceneInterface()
 
         self.tf_manager = TFManager()
@@ -80,6 +80,8 @@ class WorldManagerServer:
                            pose=box.pose_stamped,
                            size=(box.edge_length_x, box.edge_length_y, box.edge_length_z))
 
+        rospy.loginfo("Added box {}".format(box.object_name))
+
         return []
 
     def add_tf_cb(self, request):
@@ -88,11 +90,15 @@ class WorldManagerServer:
 
     def clear_objects_cb(self, request):
 
-        rospy.wait_for_service(self.planning_scene_topic, 5)
         body_names = self.scene.get_known_object_names()
+        walls = rospy.get_param('walls')
+
+        rospy.loginfo("Clearing objects: {}".format(body_names))
 
         for body_name in body_names:
-            self.scene.remove_world_object(body_name)
+            if not body_name in walls:
+                    rospy.loginfo("Removing object: {}".format(body_name))
+                    self.scene.remove_world_object(body_name)
 
         self.tf_manager.clear_tfs()
 
@@ -139,13 +145,10 @@ class WorldManagerServer:
 if __name__ == '__main__':
 
     try:
-
         rospy.sleep(3.0)
-        rospy.init_node('world_manager_node')
 
         rospy.loginfo("Starting Up World Manager")
         world_manager_ = WorldManagerServer()
-
         rospy.loginfo("World Manager Has Started")
 
         loop = rospy.Rate(30)
@@ -153,5 +156,6 @@ if __name__ == '__main__':
             world_manager_.tf_manager.broadcast_tfs()
             loop.sleep()
 
+        moveit_commander.roscpp_shutdown()
     except rospy.ROSInterruptException:
-        pass
+        rospy.signal_shutdown(reason="Interrupted")
