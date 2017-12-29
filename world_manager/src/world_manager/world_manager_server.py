@@ -4,7 +4,7 @@ import sys
 import rospy
 import moveit_commander
 import geometry_msgs.msg
-import world_manager.srv
+import world_manager_msgs.srv
 import std_srvs.srv
 
 from moveit_commander import PlanningSceneInterface
@@ -30,15 +30,15 @@ class WorldManagerServer:
             self.clear_objects_cb)
 
         self.add_box = rospy.Service(
-            "/world_manager/add_box", world_manager.srv.AddBox,
+            "/world_manager/add_box", world_manager_msgs.srv.AddBox,
             self.add_box_cb)
 
         self.add_mesh = rospy.Service(
-            "/world_manager/add_mesh", world_manager.srv.AddMesh,
+            "/world_manager/add_mesh", world_manager_msgs.srv.AddMesh,
             self.add_mesh_cb)
 
         self.add_tf_service = rospy.Service(
-            "/world_manager/add_tf", world_manager.srv.AddTF,
+            "/world_manager/add_tf", world_manager_msgs.srv.AddTF,
             self.add_tf_cb)
 
         self.add_walls_service = rospy.Service(
@@ -65,9 +65,9 @@ class WorldManagerServer:
         return []
 
     def add_box_cb(self, request):
-        # type: (world_manager.srv.AddBoxRequest) -> []
+        # type: (world_manager_msgs.srv.AddBoxRequest) -> []
         box = request.scene_box
-        # type: box -> world_manager.msg.SceneBox
+        # type: box -> world_manager_msgs.msg.SceneBox
 
         # add the tf
         self.tf_manager.add_tf(box.object_name, box.pose_stamped)

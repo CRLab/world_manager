@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package>
-  <name>world_manager</name>
+  <name>world_manager_msgs</name>
   <version>2.0.0</version>
   <description>  
-    Code for interfacing with Movit planning scene and object TFs
+    Messages for world_manager node
   </description>
 
 
@@ -11,7 +11,7 @@
 
   <author>Jake</author>
   <license>BSD</license>
-  <url>https://github.com/CURG/world_manager.git</url>
+  <url>https://github.com/CRLab/world_manager.git</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
