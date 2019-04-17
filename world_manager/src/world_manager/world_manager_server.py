@@ -89,9 +89,12 @@ class WorldManagerServer:
         return []
 
     def clear_objects_cb(self, request):
-
+        
         body_names = self.scene.get_known_object_names()
-        walls = rospy.get_param('walls')
+        try:
+            walls = rospy.get_param('walls')
+        except:
+            rospy.loginfo("No wall in this scene")
 
         rospy.loginfo("Clearing objects: {}".format(body_names))
 
@@ -105,7 +108,11 @@ class WorldManagerServer:
         return []
 
     def add_walls_cb(self, request):
-        walls = rospy.get_param('walls')
+        try:
+            walls = rospy.get_param('walls')
+        except:
+            rospy.loginfo("No wall in this scene")
+            walls = []
         for wall_params in walls:
             rospy.loginfo("Adding wall " + str(wall_params))
             self._add_wall(wall_params)

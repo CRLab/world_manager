@@ -1,0 +1,9 @@
+<launch>
+
+	<group ns="world_manager">
+	    <!--Load the walls for your workspace-->
+<!-- 	    <rosparam command="load" file="$(find world_manager)/wall.yaml"/> -->
+
+	    <node name="world_manager" pkg="world_manager" type="world_manager_server.py" output="screen"/>
+	</group>
+</launch>
